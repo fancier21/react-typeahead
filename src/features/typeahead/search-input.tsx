@@ -28,7 +28,7 @@ export const SearchInput: React.FC<Props> = ({
       </div>
       <Input
         className="typeahead-input"
-        type="search"
+        type="text"
         value={value}
         onChange={onChange}
         onFocus={onFocus}
