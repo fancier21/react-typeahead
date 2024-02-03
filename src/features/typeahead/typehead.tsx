@@ -1,37 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./typeahead.css";
+import { IGitHubUser } from "../../shared/types";
+import { SearchInput } from "./search-input";
+import { SearchResult } from "./search-result";
+
 import { useDebounceCallback } from "../../shared/hooks/useDebounce";
-import { IUser } from "../../shared/types";
-import { ResultsList } from "./typeahead-results-list";
-import { SearchInput } from "./typeahead-search-input";
 import { GITHUB_API_KEY, GITHUB_API_URL } from "../../shared/config";
 
-interface ApiResponse {
-  items: IUser[];
-}
+import "./typeahead.css";
 
-function isApiResponse(data: any): data is ApiResponse {
+function isValidGithubApiResponse(data: any): data is { items: IGitHubUser[] } {
   return typeof data === "object" && data !== null && Array.isArray(data.items);
 }
 
 function Typeahead() {
-  const [value, setValue] = useState<string>("");
-  const [results, setResults] = useState<IUser[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [githubUsers, setGithubUsers] = useState<IGitHubUser[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [noResult, setNoResult] = useState<boolean>(false);
+  const [isResultsOpen, setIsResultsOpen] = useState<boolean>(false);
+  const [noResults, setNoResults] = useState<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const typeaheadRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchResults = async (
-    newValue: string,
+  const fetchGithubUsers = async (
+    term: string,
     signal?: AbortSignal,
   ): Promise<void> => {
     const { host, path } = GITHUB_API_URL;
-    const url = `${host}${path}${newValue}`;
+    const url = `${host}${path}${term}`;
 
-    if (newValue) {
+    if (term) {
       setLoading(true);
 
       try {
@@ -44,26 +42,26 @@ function Typeahead() {
           },
         });
 
-        if (!res.ok) console.error(`Api response: ${res.statusText}`);
+        if (!res.ok) console.error(`GitHub Api response: ${res.statusText}`);
 
         const data = await res.json();
 
-        if (!isApiResponse(data)) {
-          setResults([]);
-          console.error("Invalid API response");
+        if (!isValidGithubApiResponse(data)) {
+          setGithubUsers([]);
+          console.error("Invalid GitHub API response structure");
           return;
         }
 
-        const results = data?.items;
+        const users = data.items;
 
-        if (results.length === 0) {
-          setResults([]);
-          setNoResult(true);
+        if (users.length === 0) {
+          setGithubUsers([]);
+          setNoResults(true);
           return;
         }
 
-        setResults(results);
-        setNoResult(false);
+        setGithubUsers(users);
+        setNoResults(false);
       } catch (error: any) {
         const options = { couse: error };
         console.error(error.message, options);
@@ -71,15 +69,15 @@ function Typeahead() {
         setLoading(false);
       }
     } else {
-      setResults([]);
+      setGithubUsers([]);
     }
   };
 
-  const debouncedFetchResults = useDebounceCallback(fetchResults, 300);
+  const debouncedFetchGithubUsers = useDebounceCallback(fetchGithubUsers, 300);
 
   const handleInputChange = useCallback(
-    (newValue: string) => {
-      setValue(newValue);
+    (newSearchTerm: string) => {
+      setSearchTerm(newSearchTerm);
 
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -88,19 +86,19 @@ function Typeahead() {
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
 
-      debouncedFetchResults(newValue, signal);
+      debouncedFetchGithubUsers(newSearchTerm, signal);
     },
-    [debouncedFetchResults],
+    [debouncedFetchGithubUsers],
   );
 
   const handleInputFocus = () => {
-    setIsOpen(true);
+    setIsResultsOpen(true);
   };
 
   const handleInputClear = () => {
-    setValue("");
-    setResults([]);
-    setNoResult(false);
+    setSearchTerm("");
+    setGithubUsers([]);
+    setNoResults(false);
 
     if (inputRef.current) {
       inputRef.current.focus();
@@ -112,7 +110,7 @@ function Typeahead() {
       typeaheadRef.current &&
       !typeaheadRef.current.contains(event.target as Node)
     ) {
-      setIsOpen(false);
+      setIsResultsOpen(false);
     }
   };
 
@@ -126,16 +124,20 @@ function Typeahead() {
   return (
     <div className="typeahead" ref={typeaheadRef}>
       <SearchInput
-        isOpen={isOpen}
-        value={value}
+        isOpen={isResultsOpen}
+        value={searchTerm}
         loading={loading}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
         onClear={handleInputClear}
         inputRef={inputRef}
       />
-      {isOpen && (
-        <ResultsList results={results} value={value} noResult={noResult} />
+      {isResultsOpen && (
+        <SearchResult
+          users={githubUsers}
+          searchTerm={searchTerm}
+          noResults={noResults}
+        />
       )}
     </div>
   );

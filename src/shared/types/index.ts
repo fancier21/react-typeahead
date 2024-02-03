@@ -1,1 +1,1 @@
-export type { IUser } from "./user";
+export type { IGitHubUser } from "./user";

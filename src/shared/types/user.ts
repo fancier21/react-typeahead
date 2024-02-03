@@ -1,4 +1,4 @@
-export type IUser = {
+export type IGitHubUser = {
   id: string;
   login: string;
   avatar_url: string;
