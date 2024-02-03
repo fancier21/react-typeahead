@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import useDebounce from "./shared/hooks/useDebounce";
-import { Input } from "./shared/ui/Input/input";
+import Input from "./shared/ui/Input/input";
 
 const API = {
   host: "https://api.github.com",
@@ -14,16 +14,18 @@ function App() {
   const [value, setValue] = useState<string>("");
   const [results, setResults] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchResults = async (
-    value: string,
+    newValue: string,
     signal?: AbortSignal,
   ): Promise<void> => {
     const { host, path } = API;
-    const url = `${host}${path}${value}`;
+    const url = `${host}${path}${newValue}`;
 
-    if (value.trim() !== "") {
+    if (newValue) {
       setLoading(true);
 
       try {
@@ -50,7 +52,7 @@ function App() {
         setResults(users);
       } catch (error: any) {
         const options = { couse: error };
-        console.error("Network error", error.message, options);
+        console.error(error.message, options);
       } finally {
         setLoading(false);
       }
@@ -61,52 +63,101 @@ function App() {
 
   const debouncedFetchResults = useDebounce(fetchResults, 300);
 
-  const handleInputChange = (value: string) => {
-    setValue(value);
+  const handleInputChange = useCallback(
+    (newValue: string) => {
+      setValue(newValue);
 
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
 
-    debouncedFetchResults(value, signal);
+      debouncedFetchResults(newValue, signal);
+    },
+    [debouncedFetchResults],
+  );
+
+  const handleInputFocus = () => {
+    setIsOpen(true);
   };
+
+  const handleInputClear = () => {
+    setValue("");
+    setResults([]);
+  };
+
+  const handleOutsideClick = (event: MouseEvent) => {
+    if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
   return (
     <div className="container">
-      <div className="autocomplete-search-box">
-        <Input
-          type="text"
-          value={value}
-          onChange={handleInputChange}
-          placeholder="search"
-          className="search-box"
-        />
-        <div className="search-result">
-          {loading && <div className="search-loading">Loading...</div>}
-          {results.length === 0 && value && !loading && (
-            <div className="search-no-result">No results found.</div>
-          )}
-          {results.map((user: any) => (
-            <a
-              key={user.id}
-              href={user.html_url}
-              target="_blank"
-              rel="noreferrer"
+      <div className="typeahead" ref={inputRef}>
+        <div className="typeahead-input-wrap">
+          <div className="typeahead-icon search-icon">
+            <span className="material-symbols-outlined">
+              {loading ? "progress_activity" : "search"}
+            </span>
+          </div>
+          <Input
+            className="typeahead-input"
+            type="search"
+            value={value}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            placeholder="Search..."
+          />
+          {value && isOpen && (
+            <div
+              className="typeahead-icon cancel-icon"
+              onClick={handleInputClear}
             >
-              <img
-                src={user.avatar_url}
-                alt={user.login}
-                height={30}
-                width={30}
-                className="avatar"
-              />
-              {user.login}
-            </a>
-          ))}
+              <span className="material-symbols-outlined">cancel</span>
+            </div>
+          )}
         </div>
+        {isOpen && (
+          <div className="typeahead-results-wrap">
+            <div className="typeahead-results">
+              {!value && (
+                <div className="typeahead-no-result">
+                  Try searching for github users.
+                </div>
+              )}
+              {results.length === 0 && value && !loading && (
+                <div className="typeahead-no-result">No results found.</div>
+              )}
+              {results.map((user: any) => (
+                <a
+                  key={user.id}
+                  href={user.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={user.avatar_url}
+                    alt={user.login}
+                    height={30}
+                    width={30}
+                    className="avatar"
+                  />
+                  <span className="typeahead-result">{user.login}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

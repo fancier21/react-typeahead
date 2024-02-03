@@ -2,57 +2,101 @@
   height: 100vh;
 }
 
-.autocomplete-search-box {
+.typeahead {
   position: absolute;
   top: 20%;
   left: 50%;
   transform: translate(-50%, -20%);
+  background: #202124;
+  color: #fff;
+  border-radius: 25px;
+  max-width: 450px;
+  min-width: 300px;
 }
 
-.autocomplete-search-box .search-box {
-  width: 300px;
-  padding: 14px;
-  font-size: 16px;
+.typeahead-input-wrap {
+  position: relative;
+  z-index: 9;
+}
+
+.typeahead-input {
+  width: 100%;
   border: none;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 50px;
+  background: #202124;
+  color: #fff;
+  border-radius: 25px;
+  padding: 0px 50px 0px 50px;
+  font-size: 18px;
+}
+
+.typeahead-input:focus {
   outline: none;
 }
 
-.autocomplete-search-box .search-loading {
-  padding: 10px;
-}
-
-.autocomplete-search-box .search-no-result {
-  padding: 10px;
-}
-
-.autocomplete-search-box .search-result {
+.typeahead-icon {
   position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 300px;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
+  background: none;
 }
 
-.autocomplete-search-box a {
+.search-icon {
+  top: 14px;
+  left: 20px;
+}
+
+.cancel-icon {
+  top: 14px;
+  right: 20px;
+  z-index: 99;
+}
+
+.typeahead-icon span {
+  color: #fff;
+  font-size: 22px;
+}
+
+.cancel-icon span {
+  transition: all 0.3s linear;
+}
+
+.cancel-icon span:hover {
+  cursor: pointer;
+  color: #9aa0a6;
+}
+
+.typeahead-results-wrap {
+  padding-bottom: 14px;
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: 100%;
+  background: #202124;
+  border-bottom-left-radius: 25px;
+  border-bottom-right-radius: 25px;
+}
+
+.typeahead-results {
+  max-height: 228px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 20px;
+}
+
+.typeahead-results a {
+  border-radius: 3px;
+  padding: 8px 20px;
   display: flex;
   flex-direction: row;
+  align-items: center;
   flex-wrap: nowrap;
   width: 100%;
-  align-items: center;
-  padding: 10px;
-  color: #333;
+  color: #fff;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s linear;
 }
 
-.autocomplete-search-box a img {
+.typeahead-results a img {
   width: 30px;
   height: 30px;
   margin-right: 10px;
@@ -60,6 +104,18 @@
   background-color: #f0f0f0;
 }
 
-.autocomplete-search-box a:hover {
-  background-color: #f0f0f0;
+.typeahead-results a:hover {
+  background: #303134;
+}
+
+.typeahead-result {
+  overflow: hidden;
+}
+
+.typeahead-loading {
+  padding: 10px 50px;
+}
+
+.typeahead-no-result {
+  padding: 10px 50px;
 }
