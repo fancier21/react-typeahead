@@ -117,7 +117,6 @@ function Typeahead() {
   };
 
   useEffect(() => {
-    console.log("inputRef", inputRef.current);
     document.addEventListener("mousedown", handleOutsideClick);
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
