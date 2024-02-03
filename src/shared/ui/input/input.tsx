@@ -10,7 +10,10 @@ interface InputProps {
   className?: string;
 }
 
-const Input: React.ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
+const InputBase: React.ForwardRefRenderFunction<
+  HTMLInputElement,
+  InputProps
+> = (
   { type, value, onChange, onFocus, onBlur, placeholder, className },
   ref: Ref<HTMLInputElement>,
 ) => {
@@ -32,6 +35,4 @@ const Input: React.ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   );
 };
 
-const ForwardedInput = forwardRef<HTMLInputElement, InputProps>(Input);
-
-export default ForwardedInput;
+export const Input = forwardRef<HTMLInputElement, InputProps>(InputBase);
